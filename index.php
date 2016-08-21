@@ -2,10 +2,6 @@
 <html>
 <?php
 require_once('OftIDGen.php');
-$conn = mysqli_connect("localhost","root","","oftdpwphp");
-if(!$conn){
-  die("Connection Error ".mysqli_connect_error());
-}
 session_start();
 $action = null;  // like: login logout add_instr edit_dateRange
 extract($_POST);
