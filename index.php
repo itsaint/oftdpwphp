@@ -2,15 +2,14 @@
 <html>
 <?php
 require_once('OftIDGen.php');
+$conn = mysqli_connect("localhost","root","","oftdpwphp");
+if(!$conn){
+  die("Connection Error ".mysqli_connect_error());
+}
 session_start();
-$attempt = 0;
-if(isset($_POST['tries'])){
-  $attempt = (int)$_POST['tries'];
-}
 $action = null;  // like: login logout add_instr edit_dateRange
-if(isset($_POST['id'])){
-  $action = $_POST['id']; 
-}
+extract($_POST);
+
 if(isset($_SESSION['CID'])){ // authenticated
   if("Logout" == $action){
     session_unset();
@@ -19,37 +18,35 @@ if(isset($_SESSION['CID'])){ // authenticated
     $_SERVER['HTTP_COOKIE'] = [];
     header("Location: index.php");
   }
+  echo "hello ".$_SESSION['CID']."<br />".PHP_EOL;
 ?>
 <form method="post">
-  <input type="submit" name="id" value="Logout" />
+  <input type="submit" name="action" value="Logout" />
 </form>
 <?php
-  echo "hello ".$_SESSION['CID']."<br />".PHP_EOL;
-  echo "action = ".$action."<br />";
 
 }  //END if(isset($_SESSION['CID'])){ // authenticated
 else{  // not authenticated yet
   if('Proceed' == $action ){  // login form submitted
-    if(!empty($_POST['CID'])){ // try login with the CID provided
-      if(!authenticate($_POST['CID'])){ // failed
-        show_login_form($attempt+1,$_POST['remember_me']);
-      } // END       if(!authenticate($_POST['CID'])){ // failed
+    if(!empty($cid)){ // try login with the cid provided
+      if(!authenticate($cid)){ // failed
+        show_login_form($tries+1,$remember_me);
+      } // END       if(!authenticate($cid)){ // failed
       else{ // login with the submitted id 
-        login($_POST['CID']);
+        login($cid);
       } // END else{ // login with the submitted id 
-    } // END     if(!empty($_POST['CID'])){ // try login with the CID provided
+    } // END     if(!empty($cid)){ // try login with the cid provided
     else{ // 
       login(null);
     } 
-  } // END  if('login' == $action ){  // login form submitted
+  } // END  if('Proceed' == $action ){  // login form submitted
   else{ //first page
     //try to authenticate with cookie
     if(isset($_COOKIE['CID']) && authenticate($_COOKIE['CID'])){
-      //if(authenticate($_COOKIE['CID'])){
-        login( $_COOKIE['CID'] );
+      login( $_COOKIE['CID'] );
     }
     else{  //show login form
-      show_login_form(-1, true);
+      show_login_form(0, true);
     } //END else{  //show login form
   } //END   else{ //first page
 } // END else{ // not authenticated yet
@@ -60,13 +57,13 @@ function authenticate($cid){
   $sids = array_map("int_val",file("cids.txt",FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
   return in_array($cid,$sids);     
 }
-function login($cid){
-  if(empty($cid)){
-    $cid = OftIDGen::get_new_id();
+function login($id){
+  if(empty($id)){
+    $id = OftIDGen::get_new_id();
   }
-  $_SESSION['CID'] = $cid;
-  if( $_POST['remember_me'] == true){
-    setcookie('CID',$cid);
+  $_SESSION['CID'] = $id;
+  if( $remember_me == true){
+    setcookie('CID',$id);
   }
   header("Location: index.php");
 }
@@ -79,7 +76,7 @@ function show_login_form($trial,$use_cookie){
       <form method="post">
       
         <input type="hidden" name="tries" value="<?php echo $trial; ?>"/><br />
-        If you have your 6 digit Client ID: <input type="text" name="CID" /><br />
+        If you have your 6 digit Client ID: <input type="text" name="cid" /><br />
         Or leave it blank to generate a new id.<br />
 <?php
         if($trial > 0 ){
@@ -87,8 +84,8 @@ function show_login_form($trial,$use_cookie){
         }
 ?>
         Remember me on this computer(using cookie):
-        <input type="checkbox" name="remember_me" <?php echo ($use_cookie ? "checked" : ""); ?>/><br />
-        <input type="submit" name="id" value="Proceed"/>
+        <input type="checkbox" name="remember_me" <?php echo ($use_cookie ? "'checked'" : ""); ?>/><br />
+        <input type="submit" name="action" value="Proceed"/>
       </form>
      </html>
 <?php

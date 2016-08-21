@@ -10,7 +10,7 @@ class OftIDGen{
         $i++;
         if($id == (int)rtrim($buffer) ){
           fclose($file);
-          if($i > 7) {
+          if($i > 50) {
             throw new Exception("no more ids available");
           }
           return  self::get_new_id();
